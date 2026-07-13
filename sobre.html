@@ -1,0 +1,431 @@
+<title>Rev Flow — Revenue Architecture as a Service</title>
+
+<style>
+  :root {
+    --ground: #FBF9F5;
+    --panel: #FFFFFF;
+    --panel-2: #F3EFE8;
+    --line: #E6DFD3;
+    --ink: #1A1713;
+    --ink-soft: #5C554B;
+    --ink-faint: #8B8377;
+    --accent: #E24A12;
+    --accent-deep: #B7370A;
+    --accent-tint: rgba(226, 74, 18, 0.10);
+    --grid: rgba(226, 74, 18, 0.09);
+    --shadow: 0 1px 2px rgba(26, 23, 19, .06), 0 12px 32px -12px rgba(26, 23, 19, .14);
+
+    --f-display: "Helvetica Neue", "Arial Nova", Arial, system-ui, sans-serif;
+    --f-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono: ui-monospace, "SF Mono", "Menlo", "Cascadia Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0F0E0C;
+      --panel: #17140F;
+      --panel-2: #1E1A13;
+      --line: #2C271E;
+      --ink: #F4EFE7;
+      --ink-soft: #B7AE9F;
+      --ink-faint: #7C7365;
+      --accent: #FF6B33;
+      --accent-deep: #FF884F;
+      --accent-tint: rgba(255, 107, 51, 0.12);
+      --grid: rgba(255, 107, 51, 0.10);
+      --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 20px 50px -20px rgba(0, 0, 0, .7);
+    }
+  }
+
+  :root[data-theme="light"] {
+    --ground: #FBF9F5; --panel: #FFFFFF; --panel-2: #F3EFE8; --line: #E6DFD3;
+    --ink: #1A1713; --ink-soft: #5C554B; --ink-faint: #8B8377;
+    --accent: #E24A12; --accent-deep: #B7370A;
+    --accent-tint: rgba(226, 74, 18, 0.10); --grid: rgba(226, 74, 18, 0.09);
+    --shadow: 0 1px 2px rgba(26, 23, 19, .06), 0 12px 32px -12px rgba(26, 23, 19, .14);
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F0E0C; --panel: #17140F; --panel-2: #1E1A13; --line: #2C271E;
+    --ink: #F4EFE7; --ink-soft: #B7AE9F; --ink-faint: #7C7365;
+    --accent: #FF6B33; --accent-deep: #FF884F;
+    --accent-tint: rgba(255, 107, 51, 0.12); --grid: rgba(255, 107, 51, 0.10);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 20px 50px -20px rgba(0, 0, 0, .7);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  .wrap { width: 100%; max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 0; border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .brand .mark {
+    width: 30px; height: 30px; flex: none;
+    border: 1.5px solid var(--accent); border-radius: 7px; position: relative;
+    background: var(--accent-tint);
+  }
+  .brand .mark::before, .brand .mark::after {
+    content: ""; position: absolute; background: var(--accent);
+  }
+  .brand .mark::before { left: 8px; top: 6px; width: 2px; height: 18px; }
+  .brand .mark::after { left: 8px; top: 15px; width: 14px; height: 2px; }
+  .brand .name {
+    font-family: var(--f-display); font-weight: 700; font-size: 18px;
+    letter-spacing: -.01em;
+  }
+  .topbar .loc {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em;
+    color: var(--ink-faint); text-transform: uppercase;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; padding: 92px 0 60px; }
+  .hero-grid {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 52px 52px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 35%, #000 40%, transparent 100%);
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 35%, #000 40%, transparent 100%);
+  }
+  .hero .wrap { position: relative; z-index: 1; }
+
+  .hero h1 {
+    font-family: var(--f-display);
+    font-weight: 800;
+    font-size: clamp(38px, 8.2vw, 76px);
+    line-height: 1.02;
+    letter-spacing: -.025em;
+    margin: 22px 0 0;
+    max-width: 15ch;
+    text-wrap: balance;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .lead {
+    margin: 24px 0 0;
+    font-size: clamp(17px, 2.4vw, 20px);
+    color: var(--ink-soft);
+    max-width: 54ch;
+    line-height: 1.55;
+  }
+  .placeholder { border-bottom: 1.5px dashed var(--accent); }
+
+  .cta-row {
+    display: flex; flex-wrap: wrap; gap: 14px; margin-top: 38px; align-items: center;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--f-body); font-weight: 600; font-size: 16px;
+    padding: 15px 26px; border-radius: 11px; text-decoration: none;
+    border: 1.5px solid transparent; cursor: pointer;
+    transition: transform .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+  }
+  .btn svg { width: 18px; height: 18px; }
+  .btn-primary {
+    background: var(--accent); color: #fff;
+    box-shadow: 0 8px 22px -8px var(--accent);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -10px var(--accent); background: var(--accent-deep); }
+  .btn-ghost {
+    background: transparent; color: var(--ink); border-color: var(--line);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+  /* ---------- Flow diagram ---------- */
+  .flow {
+    margin-top: 66px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+    padding: 30px 26px 26px;
+    position: relative;
+    overflow: hidden;
+  }
+  .flow-label {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ink-faint); margin: 0 0 22px;
+    display: flex; justify-content: space-between;
+  }
+  .flow-track {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    position: relative;
+  }
+  .flow-line {
+    position: absolute; left: 8%; right: 8%; top: 21px; height: 2px;
+    background: var(--line); overflow: hidden; border-radius: 2px;
+  }
+  .flow-line::after {
+    content: ""; position: absolute; top: 0; left: 0; height: 100%; width: 40%;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: flowmove 3.2s linear infinite;
+  }
+  @keyframes flowmove { from { left: -40%; } to { left: 100%; } }
+  .stage { text-align: center; position: relative; z-index: 1; padding: 0 6px; }
+  .stage .dot {
+    width: 44px; height: 44px; margin: 0 auto 14px;
+    border-radius: 50%; background: var(--panel); border: 2px solid var(--accent);
+    display: grid; place-items: center; font-family: var(--f-mono);
+    font-size: 13px; font-weight: 600; color: var(--accent);
+  }
+  .stage h3 {
+    font-family: var(--f-display); font-size: 16px; font-weight: 700;
+    margin: 0 0 4px; letter-spacing: -.01em;
+  }
+  .stage p { margin: 0; font-size: 13px; color: var(--ink-faint); line-height: 1.4; }
+
+  /* ---------- Section ---------- */
+  section.block { padding: 76px 0; border-top: 1px solid var(--line); }
+  .sec-head { max-width: 60ch; }
+  .sec-head h2 {
+    font-family: var(--f-display); font-weight: 800;
+    font-size: clamp(27px, 5vw, 40px); letter-spacing: -.02em;
+    line-height: 1.08; margin: 14px 0 0; text-wrap: balance;
+  }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 44px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 26px 24px; box-shadow: var(--shadow);
+    transition: transform .18s ease, border-color .2s ease;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .card .num {
+    font-family: var(--f-mono); font-size: 12px; color: var(--accent);
+    letter-spacing: .1em;
+  }
+  .card h3 {
+    font-family: var(--f-display); font-size: 20px; font-weight: 700;
+    margin: 16px 0 8px; letter-spacing: -.01em;
+  }
+  .card p { margin: 0; font-size: 15px; color: var(--ink-soft); line-height: 1.55; }
+
+  /* ---------- Final CTA ---------- */
+  .final {
+    margin: 76px 0 0; padding: 60px 40px;
+    border-radius: 22px; position: relative; overflow: hidden;
+    background:
+      radial-gradient(120% 140% at 100% 0%, var(--accent-tint), transparent 60%),
+      var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .final h2 {
+    font-family: var(--f-display); font-weight: 800;
+    font-size: clamp(28px, 5.2vw, 46px); letter-spacing: -.025em;
+    line-height: 1.06; margin: 14px auto 0; max-width: 18ch; text-wrap: balance;
+  }
+  .final p { color: var(--ink-soft); max-width: 46ch; margin: 18px auto 0; }
+  .final .cta-row { justify-content: center; }
+
+  /* ---------- Footer / links ---------- */
+  footer { padding: 60px 0 70px; border-top: 1px solid var(--line); margin-top: 76px; }
+  .links {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px; margin-bottom: 40px;
+  }
+  .link-btn {
+    display: flex; align-items: center; gap: 14px; text-decoration: none;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 18px; color: var(--ink);
+    transition: transform .15s ease, border-color .2s ease;
+  }
+  .link-btn:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .link-btn .ic {
+    width: 40px; height: 40px; flex: none; border-radius: 10px;
+    background: var(--accent-tint); display: grid; place-items: center; color: var(--accent);
+  }
+  .link-btn .ic svg { width: 20px; height: 20px; }
+  .link-btn .txt small {
+    display: block; font-family: var(--f-mono); font-size: 10px;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint);
+  }
+  .link-btn .txt strong { font-size: 15px; font-weight: 600; }
+
+  .foot-base {
+    display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center;
+    justify-content: space-between; color: var(--ink-faint);
+    font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em;
+  }
+
+  @media (max-width: 720px) {
+    .cards { grid-template-columns: 1fr; }
+    .flow-track { grid-template-columns: repeat(2, 1fr); gap: 26px 0; }
+    .flow-line { display: none; }
+    .hero { padding: 60px 0 40px; }
+    .final { padding: 44px 24px; }
+    .btn { flex: 1 1 auto; justify-content: center; }
+  }
+
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .flow-line::after { animation: none; }
+    .btn, .card, .link-btn { transition: none; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <span class="name">Rev Flow</span>
+    </div>
+    <span class="loc">Revenue Architecture</span>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="hero-grid" aria-hidden="true"></div>
+  <div class="wrap">
+    <p class="eyebrow reveal">Revenue Architecture as a Service</p>
+    <h1 class="reveal">A arquitetura por trás de uma receita <em>previsível</em>.</h1>
+    <p class="lead reveal">
+      <span class="placeholder">Ajudo empresas B2B a organizar nutrição, vendas e pós-venda em um único fluxo</span> —
+      para crescer sem depender de heróis, planilhas soltas ou sorte.
+    </p>
+    <div class="cta-row reveal">
+      <a class="btn btn-primary" href="https://calendar.app.google/SWh318XpGBDHFJit9" target="_blank" rel="noopener" data-cta="agendar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Agendar reunião
+      </a>
+      <a class="btn btn-ghost" href="#como">
+        Ver como funciona
+      </a>
+    </div>
+
+    <div class="flow reveal" aria-label="O fluxo de receita">
+      <p class="flow-label"><span>Fluxo de receita</span><span>ponta a ponta</span></p>
+      <div class="flow-track">
+        <div class="flow-line" aria-hidden="true"></div>
+        <div class="stage">
+          <div class="dot">01</div>
+          <h3>Nutrição</h3>
+          <p>Atrair e qualificar quem tem fit real</p>
+        </div>
+        <div class="stage">
+          <div class="dot">02</div>
+          <h3>Vendas</h3>
+          <p>Processo claro do lead ao fechamento</p>
+        </div>
+        <div class="stage">
+          <div class="dot">03</div>
+          <h3>Onboarding</h3>
+          <p>Entrega que começa a gerar valor cedo</p>
+        </div>
+        <div class="stage">
+          <div class="dot">04</div>
+          <h3>Contas &amp; CS</h3>
+          <p>Retenção e expansão da carteira</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="block" id="como">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow">Como eu ajudo</p>
+      <h2>Menos improviso. Mais máquina de receita.</h2>
+    </div>
+    <div class="cards">
+      <div class="card reveal">
+        <span class="num">01</span>
+        <h3>Diagnóstico do funil</h3>
+        <p>Mapeio onde a receita vaza — da geração de leads ao pós-venda — e mostro os pontos que mais custam caro hoje.</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">02</span>
+        <h3>Processo e playbooks</h3>
+        <p>Desenho o passo a passo de cada etapa, com critérios de qualificação, cadências e responsáveis claros.</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">03</span>
+        <h3>Dados e previsibilidade</h3>
+        <p>Estruturo métricas e um CRM que mostram o pipeline de verdade — para decidir com número, não com achismo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="final reveal" id="agendar">
+    <p class="eyebrow">Próximo passo</p>
+    <h2>Vamos desenhar sua máquina de receita?</h2>
+    <p>Uma conversa de 30 minutos para entender seu momento e mostrar onde estão as maiores oportunidades.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://calendar.app.google/SWh318XpGBDHFJit9" target="_blank" rel="noopener" data-cta="agendar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Agendar reunião
+      </a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p class="eyebrow reveal" style="margin-bottom:22px;">Onde me encontrar</p>
+    <div class="links reveal">
+      <a class="link-btn" href="https://calendar.app.google/SWh318XpGBDHFJit9" target="_blank" rel="noopener" data-link="agendar">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+        <span class="txt"><small>Reunião</small><strong>Agendar horário</strong></span>
+      </a>
+      <a class="link-btn" href="https://instagram.com/feijaodocrm" target="_blank" rel="noopener" data-link="instagram">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg></span>
+        <span class="txt"><small>Instagram</small><strong>@feijaodocrm</strong></span>
+      </a>
+      <a class="link-btn" href="mailto:feijao@revflowbr.com" data-link="email">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+        <span class="txt"><small>E-mail</small><strong>feijao@revflowbr.com</strong></span>
+      </a>
+    </div>
+    <div class="foot-base">
+      <span>© Rev Flow — Feijão</span>
+      <span>Revenue Architecture as a Service</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(function (e) { e.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.12 });
+    els.forEach(function (e) { io.observe(e); });
+  })();
+</script>
